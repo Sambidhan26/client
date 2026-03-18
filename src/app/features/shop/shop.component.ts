@@ -31,18 +31,17 @@ import { ShopParams } from '../../shared/Models/shopParams';
 })
 export class ShopComponent implements OnInit {
   private shopService = inject(ShopService);
-  //public shopParams = inject(ShopParams);
   private dialogService = inject(MatDialog);
   title = 'Skinet';
   products: Product[] = [];
-  selectedBrands: string[] = [];
-  selectedTypes: string[] = [];
-  selectedSort?: string[] = [];
+
   sortOptions = [
     { name: 'Alphabetical', value: 'name' },
     { name: 'Price: Low to High', value: 'priceAsc' },
     { name: 'Price: High to Low', value: 'priceDesc' }
    ];
+
+   shopParams = new ShopParams();
 
     ngOnInit(): void {
     this.initializeShop();
@@ -56,7 +55,7 @@ initializeShop() {
 
 getProducts() 
 {
-   this.shopService.getProducts(this.selectedBrands, this.selectedTypes, this.selectedSort?.toString()).subscribe({
+   this.shopService.getProducts(this.shopParams).subscribe({
       next: response => this.products = response.data,
       error: error => console.log(error)
 })
@@ -66,24 +65,24 @@ onSortChange(event: MatSelectionListChange)
 {
   const selectOptions = event.options[0]
   if(selectOptions) {
-    this.selectedSort = selectOptions.value;
-    console.log('Selected sort: ' + this.selectedSort);
+    this.shopParams.sort = selectOptions.value;
+    console.log('Selected sort: ' + this.shopParams.sort);
     this.getProducts();
   }
 }
 openFilterDialog() {
   const dialogRef = this.dialogService.open(FiltersDialogComponent, {
     minWidth: '500px',
-    data: {selectedBrands: this.selectedBrands,
-           selectedTypes: this.selectedTypes}
+    data: {selectedBrands: this.shopParams.brands,
+           selectedTypes: this.shopParams.types}
   });
   
   dialogRef.afterClosed().subscribe({
   next: result => {
     if (result) {
       //console.log(result);
-      this.selectedBrands = result.selectedBrands;
-      this.selectedTypes = result.selectedTypes;
+      this.shopParams.brands = result.selectedBrands;
+      this.shopParams.types = result.selectedTypes;
       this.getProducts();
       
     }
