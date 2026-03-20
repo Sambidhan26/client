@@ -5,12 +5,15 @@ import { MatCard} from '@angular/material/card';
 import { ProductItemComponent } from "./product-item/product-item.component";
 import { MatDialog } from '@angular/material/dialog';
 import { FiltersDialogComponent } from './filters-dialog/filters-dialog.component';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatIcon } from "@angular/material/icon";
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { MatListOption, MatSelectionList, MatSelectionListChange } from '@angular/material/list';
 import { ShopParams } from '../../shared/Models/shopParams';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { Pagination } from '../../shared/Models/pagination';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
@@ -24,7 +27,10 @@ import { ShopParams } from '../../shared/Models/shopParams';
     MatSelectionList,
     MatListOption,
     MatMenuTrigger,
-    MatSelectTrigger
+    MatSelectTrigger,
+    MatPaginator,
+    FormsModule,
+    MatIconButton
 ],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.css',
@@ -33,7 +39,7 @@ export class ShopComponent implements OnInit {
   private shopService = inject(ShopService);
   private dialogService = inject(MatDialog);
   title = 'Skinet';
-  products: Product[] = [];
+  products?: Pagination<Product>;
 
   sortOptions = [
     { name: 'Alphabetical', value: 'name' },
@@ -42,6 +48,7 @@ export class ShopComponent implements OnInit {
    ];
 
    shopParams = new ShopParams();
+   pageSizeOptions = [5,10,15,20];
 
     ngOnInit(): void {
     this.initializeShop();
@@ -56,9 +63,20 @@ initializeShop() {
 getProducts() 
 {
    this.shopService.getProducts(this.shopParams).subscribe({
-      next: response => this.products = response.data,
+      next: response => this.products = response,
       error: error => console.log(error)
 })
+}
+
+onSearchChange() {
+  this.shopParams.pageNumber = 1;
+  this.getProducts();
+}
+
+handlePageEvent(event: PageEvent) {
+  this.shopParams.pageNumber = event.pageIndex + 1;
+  this.shopParams.pageSize = event.pageSize;
+  this.getProducts();
 }
 
 onSortChange(event: MatSelectionListChange)
@@ -66,7 +84,7 @@ onSortChange(event: MatSelectionListChange)
   const selectOptions = event.options[0]
   if(selectOptions) {
     this.shopParams.sort = selectOptions.value;
-    console.log('Selected sort: ' + this.shopParams.sort);
+    this.shopParams.pageNumber = 1;
     this.getProducts();
   }
 }
@@ -83,6 +101,7 @@ openFilterDialog() {
       //console.log(result);
       this.shopParams.brands = result.selectedBrands;
       this.shopParams.types = result.selectedTypes;
+      this.shopParams.pageNumber = 1;
       this.getProducts();
       
     }
